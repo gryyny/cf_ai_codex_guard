@@ -60,7 +60,7 @@ export function isTestFile(path: string): boolean {
   const name = basename(path);
   return (
     directorySegments(path).some((segment) => TEST_DIRS.has(segment)) ||
-    /\.(test|spec)\./.test(name) ||
+    /\.(test|spec)(-d)?\./.test(name) ||
     name.endsWith("_test.go") ||
     /^test_.*\.py$/.test(name) ||
     name.endsWith("_test.py")

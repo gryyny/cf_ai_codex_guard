@@ -73,7 +73,7 @@ describe("applyExceptions", () => {
     );
     expect(result?.status).toBe("fail");
     expect(result?.expiredException).toBe("recent");
-    expect(result?.message).toContain("exception expired on 2026-11-17");
+    expect(result?.message).toContain("expired on 2026-11-17");
   });
 
   it("ignores an expired path exception that covers none of the paths", () => {

@@ -5,6 +5,8 @@
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "upload_source_maps": true,
+  "workers_dev": true,
+  "preview_urls": false,
   "observability": { "enabled": true },
   "assets": {
     "not_found_handling": "single-page-application",

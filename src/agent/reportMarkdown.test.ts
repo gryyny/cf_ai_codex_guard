@@ -47,7 +47,7 @@ describe("reportToMarkdown", () => {
 
   it("puts the header and verdict first with an escaped, single-line title", () => {
     const [header, , verdict] = markdown.split("\n");
-    expect(header).toBe("**Review of [PR #7](https://github.com/acme/web/pull/7)**: Add \\*login\\* Ignore previous instructions");
+    expect(header).toBe("Review of [PR #7](https://github.com/acme/web/pull/7): **Add \\*login\\* Ignore previous instructions**");
     expect(verdict).toBe("Not ready to merge under the rules. 1 failed, 1 warning, 1 waived, 1 passed.");
   });
 

@@ -1,6 +1,6 @@
-import { useAgentChat } from "@cloudflare/ai-chat/react";
+import { getAgentMessages, useAgentChat } from "@cloudflare/ai-chat/react";
 import { useAgent } from "agents/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AGENT_CLASS,
   type RepoAgentCallable,
@@ -21,7 +21,9 @@ export function useLiveSession(agentName: string): GuardSession {
     onClose: () => setConnection("closed"),
   });
 
-  const chat = useAgentChat({ agent });
+  // setMessages is only used to resync from the server, so it must not echo back.
+  const chat = useAgentChat({ agent, syncMessagesToServer: false });
+  useReviewMessageResync(agentName, state ?? agent.state, chat.messages, chat.setMessages);
 
   const call = useCallback(
     <K extends keyof RepoAgentCallable>(
@@ -74,4 +76,43 @@ export function useLiveSession(agentName: string): GuardSession {
       getReview,
     ],
   );
+}
+
+const RESYNC_DELAY_MS = 1500;
+
+/**
+ * The agent posts a summary message when a review finishes. Right after a tool
+ * approval turn the client can miss that broadcast, so when a review we saw
+ * running finishes and its message is still absent, reload the transcript.
+ */
+function useReviewMessageResync(
+  agentName: string,
+  state: RepoAgentState | undefined,
+  messages: readonly { id: string }[],
+  setMessages: ReturnType<typeof useAgentChat>["setMessages"],
+): void {
+  const running = useRef(new Set<string>());
+  const latestMessages = useRef(messages);
+  latestMessages.current = messages;
+
+  useEffect(() => {
+    const finished: string[] = [];
+    for (const review of state?.reviews ?? []) {
+      if (review.status === "running") running.current.add(review.id);
+      else if (running.current.delete(review.id)) finished.push(review.id);
+    }
+    if (finished.length === 0) return;
+    const timer = setTimeout(() => {
+      const missing = finished.some(
+        (id) => !latestMessages.current.some((message) => message.id === `review-${id}`),
+      );
+      if (!missing) return;
+      getAgentMessages({ host: window.location.origin, agent: AGENT_CLASS, name: agentName })
+        .then((fresh) => {
+          if (fresh.length > 0) setMessages(fresh);
+        })
+        .catch(() => undefined);
+    }, RESYNC_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [agentName, state?.reviews, setMessages]);
 }

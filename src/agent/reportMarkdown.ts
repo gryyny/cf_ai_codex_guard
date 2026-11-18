@@ -90,7 +90,7 @@ export function reportToMarkdown(report: ReviewReport, exceptions: readonly Exce
   const passed = findings.filter((finding) => finding.status === "pass");
 
   const lines = [
-    `**Review of [PR #${report.pr.number}](${report.pr.url})**: ${plainText(report.title, 200)}`,
+    `Review of [PR #${report.pr.number}](${report.pr.url}): **${plainText(report.title, 200)}**`,
     "",
     `${verdict(report.counts)} ${countsLine(report.counts)}.`,
   ];

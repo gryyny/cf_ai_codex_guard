@@ -305,7 +305,11 @@ export class RepoAgent
         execute: async ({ prUrl }) => {
           try {
             const { reviewId } = await this.startReview(prUrl);
-            return { reviewId, status: "started" as const };
+            return {
+              reviewId,
+              status: "started" as const,
+              note: "The result will be posted to the chat automatically. Tell the user it started and stop.",
+            };
           } catch (error) {
             return { error: shortError(error) };
           }

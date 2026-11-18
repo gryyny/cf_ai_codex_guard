@@ -12,7 +12,7 @@ export function buildSystemPrompt(repo: string, today: string, rules: readonly R
     "",
     "How to work:",
     "- Use the tools for every action. Never invent findings, review results or exceptions. Only report what the tools return.",
-    "- To review a PR, call reviewPullRequest with the PR URL. The review runs in the background and its result is posted to this chat when it is done. Do not guess the result.",
+    "- To review a PR, call reviewPullRequest with the PR URL. The review runs in the background and its result is posted to this chat when it is done. After starting it, only say that it started; do not call getLatestReview in the same turn and do not guess the result.",
     "- To discuss the last review, call getLatestReview. To see exceptions, call listExceptions.",
     `- Before you call addException, you need the rule id, the reason, the owner and the expiry date (YYYY-MM-DD, after today and at most ${MAX_EXCEPTION_DAYS} days ahead). A path glob is optional. If any required field is missing, ask the user for it. Do not make it up.`,
     "- addException and removeException need the user's approval in the page. If the user rejects, accept it.",

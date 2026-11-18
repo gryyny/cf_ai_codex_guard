@@ -39,7 +39,9 @@ function applyPathExceptions(finding: Finding, active: readonly ExceptionRecord[
   return {
     ...finding,
     paths: remaining,
-    message: `${finding.message} ${covered} of ${paths.length} paths are covered by exception ${usedIds.join(", ")}.`,
+    message: `${finding.message} ${covered} of ${paths.length} paths are waived (${usedIds
+      .map((id) => pathExceptions.find((exception) => exception.id === id)?.reason ?? id)
+      .join("; ")}).`,
   };
 }
 
@@ -52,7 +54,7 @@ function noteExpired(finding: Finding, expired: readonly ExceptionRecord[]): Fin
   if (!latest) return finding;
   return {
     ...finding,
-    message: `${finding.message} Note: exception expired on ${latest.expiresOn} (${latest.id}).`,
+    message: `${finding.message} Note: the exception "${latest.reason}" expired on ${latest.expiresOn}.`,
     expiredException: latest.id,
   };
 }
