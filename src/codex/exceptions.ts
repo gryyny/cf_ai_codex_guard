@@ -14,7 +14,7 @@ function waive(finding: Finding, exception: ExceptionRecord, paths?: string[]): 
   return {
     ...finding,
     status: "waived",
-    message: `${finding.message} Waived by exception ${exception.id}: ${exception.reason}`,
+    message: finding.message,
     ...(paths ? { paths } : {}),
     waivedBy: exception.id,
   };

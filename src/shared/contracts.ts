@@ -71,7 +71,7 @@ export const RULES: readonly RuleDefinition[] = [
     id: "focused-change",
     title: "Change matches the description",
     description:
-      "The diff must not contain notable changes that the title and description do not mention.",
+      "The diff must not contain notable changes that the title and description do not mention. Tests, docs, changelog entries and small refactors that support the described change are fine.",
     kind: "llm",
     severity: "warn",
   },

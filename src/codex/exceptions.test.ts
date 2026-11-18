@@ -51,8 +51,8 @@ describe("applyExceptions", () => {
     const [result] = applyExceptions([failing], [exception({})], TODAY);
     expect(result?.status).toBe("waived");
     expect(result?.waivedBy).toBe("ex-1");
-    expect(result?.message).toContain(failing.message);
-    expect(result?.message).toContain("Legacy module");
+    // The report adds the exception's reason and owner from waivedBy.
+    expect(result?.message).toBe(failing.message);
   });
 
   it("treats the expiry day as active", () => {
