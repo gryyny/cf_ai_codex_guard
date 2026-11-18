@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local dev. Fine-grained GitHub token with read-only access to public repositories.
+GITHUB_TOKEN=
