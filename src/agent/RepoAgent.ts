@@ -267,7 +267,9 @@ export class RepoAgent
     await this.failReview(workflowId, shortError(error));
   }
 
-  private async failReview(reviewId: string, error: string): Promise<void> {
+  private async failReview(reviewId: string, rawError: string): Promise<void> {
+    // Workflow errors arrive as "NonRetryableError: <message>"; users only need the message.
+    const error = rawError.replace(/^\w*Error:\s*/, "");
     const row = this.readReview(reviewId);
     if (!row || !this.markErrored(reviewId, error)) return;
     await this.appendAssistantMessage(`review-${reviewId}`, reviewFailedMarkdown(row.pr_url, error));
