@@ -4,7 +4,7 @@ type Block = { kind: "paragraph"; lines: string[] } | { kind: "list"; ordered: b
 
 const BULLET = /^\s*[-*•]\s+(.*)$/;
 const NUMBERED = /^\s*\d+[.)]\s+(.*)$/;
-const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s)]+)/g;
+const INLINE = /(\*\*(?:\\.|[^*\\])+\*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\)|https?:\/\/[^\s)]+)/g;
 
 function toBlocks(text: string): Block[] {
   const blocks: Block[] = [];
@@ -51,23 +51,28 @@ function link(label: string, url: string, key: string): ReactNode {
   );
 }
 
+/** The agent escapes markdown characters in untrusted text; show them as typed. */
+function unescape(text: string): string {
+  return text.replace(/\\([\\`*_[\]<>#|~()!-])/g, "$1");
+}
+
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
   return text.split(INLINE).map((token, i) => {
     const key = `${keyPrefix}-${i}`;
     if (token.startsWith("**") && token.endsWith("**") && token.length > 4) {
-      return <strong key={key}>{token.slice(2, -2)}</strong>;
+      return <strong key={key}>{unescape(token.slice(2, -2))}</strong>;
     }
     if (token.startsWith("`") && token.endsWith("`") && token.length > 2) {
       return <code key={key}>{token.slice(1, -1)}</code>;
     }
     const md = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(token);
-    if (md?.[1] && md[2]) return link(md[1], md[2], key);
+    if (md?.[1] && md[2]) return link(unescape(md[1]), md[2], key);
     if (/^https?:\/\//.test(token)) {
       const trimmed = token.replace(/[.,;:!?]+$/, "");
       const rest = token.slice(trimmed.length);
       return [link(trimmed, trimmed, key), rest];
     }
-    return token;
+    return unescape(token);
   });
 }
 

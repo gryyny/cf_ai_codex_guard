@@ -43,12 +43,21 @@ function checkLength(label: string, value: string, limits: { min: number; max: n
   return null;
 }
 
+const MAX_GLOB_STARS = 6;
+
+/** Rules whose findings are about the whole PR, so a path glob could never match. */
+const WHOLE_PR_RULES: ReadonlySet<string> = new Set(["pr-size", "clear-description", "focused-change"]);
+
 function checkPathGlob(glob: string): string | null {
   const lengthError = checkLength("pathGlob", glob, LIMITS.pathGlob);
   if (lengthError) return lengthError;
   if (/\s/.test(glob)) return "pathGlob must not contain spaces.";
   if (glob.startsWith("/") || glob.split("/").includes("..")) {
     return "pathGlob must be a path relative to the repo root.";
+  }
+  // Many wildcards make glob matching backtrack heavily.
+  if ((glob.match(/\*/g)?.length ?? 0) > MAX_GLOB_STARS || glob.includes("***")) {
+    return `pathGlob can have at most ${MAX_GLOB_STARS} "*" characters.`;
   }
   return null;
 }
@@ -74,6 +83,9 @@ export function validateNewException(input: ExceptionInput, today: string): Vali
   const expiresOn = input.expiresOn.trim();
 
   const error =
+    (pathGlob !== null && WHOLE_PR_RULES.has(ruleId)
+      ? `${ruleId} applies to the whole PR, so it cannot be waived for a path. Leave out the path glob.`
+      : null) ??
     (pathGlob === null ? null : checkPathGlob(pathGlob)) ??
     checkLength("reason", reason, LIMITS.reason) ??
     checkLength("owner", owner, LIMITS.owner) ??

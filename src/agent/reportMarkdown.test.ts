@@ -55,8 +55,8 @@ describe("reportToMarkdown", () => {
     const lines = markdown.split("\n").filter((line) => line.startsWith("- "));
     expect(lines.map((line) => line.split(" ")[1])).toEqual(["**FAIL**", "**WARN**", "**WAIVED**"]);
     expect(lines[0]).toContain("and 1 more");
-    expect(lines[0]).toContain("A matching exception has expired: exception `ex-old` (since removed).");
-    expect(lines[2]).toContain('Waived by exception `ex-1` for `db/migrations/**`: "One-off schema migration" (owner ana, until 2026-12-31).');
+    expect(lines[0]).toContain("A matching exception has expired: an exception that was removed since.");
+    expect(lines[2]).toContain('Waived by exception for `db/migrations/**`: "One-off schema migration" (owner ana, until 2026-12-31).');
   });
 
   it("lists passed rules and skipped files", () => {

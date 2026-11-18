@@ -55,9 +55,9 @@ function verdict(counts: FindingCounts): string {
 
 function exceptionText(id: string, exceptions: ReadonlyMap<string, ExceptionRecord>): string {
   const exception = exceptions.get(id);
-  if (!exception) return `exception ${code(id)} (since removed)`;
+  if (!exception) return "an exception that was removed since";
   const scope = exception.pathGlob ? ` for ${code(exception.pathGlob)}` : "";
-  return `exception ${code(id)}${scope}: "${plainText(exception.reason)}" (owner ${plainText(exception.owner, 100)}, until ${exception.expiresOn})`;
+  return `exception${scope}: "${plainText(exception.reason)}" (owner ${plainText(exception.owner, 100)}, until ${exception.expiresOn})`;
 }
 
 function pathsText(paths: readonly string[] | undefined): string {

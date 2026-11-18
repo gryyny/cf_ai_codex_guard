@@ -138,6 +138,7 @@ export function ChatPanel(props: ChatPanelProps) {
         <textarea
           id="composer-input"
           rows={2}
+          maxLength={2000}
           value={draft}
           placeholder={`Ask about ${repoSlug}…`}
           onChange={(event) => setDraft(event.target.value)}

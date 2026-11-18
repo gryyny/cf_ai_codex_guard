@@ -1,5 +1,5 @@
 import { AIChatAgent, type OnChatMessageOptions } from "@cloudflare/ai-chat";
-import { callable } from "agents";
+import { callable, type Connection } from "agents";
 import { createAI } from "agents/models/ai-sdk";
 import {
   convertToModelMessages,
@@ -182,8 +182,9 @@ export class RepoAgent
     const check = checkPrForRepo(prUrl, this.repo);
     if (!check.ok) throw new Error(check.error);
     this.releaseStaleReview();
-    const active = this.state.activeReview;
-    if (active) throw new Error(`A review is already running for ${active.prUrl}. Wait until it finishes.`);
+    // SQL, not state: state is what clients see, the reviews table is the source of truth.
+    const [running] = this.sql<{ pr_url: string }>`SELECT pr_url FROM reviews WHERE status = 'running' LIMIT 1`;
+    if (running) throw new Error(`A review is already running for ${running.pr_url}. Wait until it finishes.`);
 
     const { pr } = check;
     const reviewId = crypto.randomUUID();
@@ -275,12 +276,19 @@ export class RepoAgent
     await this.appendAssistantMessage(`review-${reviewId}`, reviewFailedMarkdown(row.pr_url, error));
   }
 
+  /** Clients only read state; every change goes through the agent's own methods. */
+  validateStateChange(_next: RepoAgentState, source: Connection | "server"): void {
+    if (source !== "server") throw new Error("State is read-only for clients.");
+  }
+
   // ---------- Chat ----------
 
   async onChatMessage(_onFinish: unknown, options?: OnChatMessageOptions): Promise<Response> {
     const today = utcDate(new Date());
     const ai = createAI({ binding: this.env.AI });
-    const modelMessages = await convertToModelMessages(this.messages.slice(-MAX_CONTEXT_MESSAGES));
+    const modelMessages = await convertToModelMessages(
+      this.messages.slice(-MAX_CONTEXT_MESSAGES).map(capTextParts),
+    );
 
     const result = streamText({
       model: ai(this.env.LLM_MODEL),
@@ -366,4 +374,18 @@ export class RepoAgent
       }),
     };
   }
+}
+
+const MAX_PART_CHARS = 4_000;
+
+/** One huge message must not push every later turn over the model's context window. */
+function capTextParts(message: UIMessage): UIMessage {
+  return {
+    ...message,
+    parts: message.parts.map((part) =>
+      part.type === "text" && part.text.length > MAX_PART_CHARS
+        ? { ...part, text: `${part.text.slice(0, MAX_PART_CHARS)} [message cut]` }
+        : part,
+    ),
+  };
 }

@@ -23,6 +23,16 @@ describe("validateNewException", () => {
     expect(result.ok && result.value.pathGlob).toBeNull();
   });
 
+  it("rejects a path glob on rules that judge the whole PR", () => {
+    const result = validateNewException({ ...valid, ruleId: "pr-size", pathGlob: "docs/**" }, today);
+    expect(result.ok).toBe(false);
+  });
+
+  it("rejects globs with many wildcards", () => {
+    const result = validateNewException({ ...valid, pathGlob: "**a**a**a**b" }, today);
+    expect(result.ok).toBe(false);
+  });
+
   it("rejects unknown rules", () => {
     expect(validateNewException({ ...valid, ruleId: "no-tabs" }, today)).toEqual({
       ok: false,

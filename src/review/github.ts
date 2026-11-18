@@ -12,7 +12,7 @@ export const FILES_PER_PAGE = 100;
 export const MAX_FILE_PAGES = 3;
 // Step results must stay under 1 MiB, so patches are capped well below it.
 export const MAX_PATCH_BYTES = 100_000;
-export const MAX_TOTAL_PATCH_BYTES = 600_000;
+export const MAX_TOTAL_PATCH_BYTES = 400_000;
 
 export type FetchFn = typeof fetch;
 

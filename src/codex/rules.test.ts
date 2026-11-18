@@ -72,8 +72,9 @@ describe("no-secrets", () => {
 
   it("mentions files without a patch", () => {
     const result = finding("no-secrets", pr([file("img.png", { patch: undefined }), file("gone.ts", { status: "removed", patch: undefined })]));
-    expect(result.status).toBe("pass");
-    expect(result.message).toContain("1 file had no patch");
+    expect(result.status).toBe("warn");
+    expect(result.message).toContain("1 file had no diff to scan");
+    expect(result.paths).toEqual(["img.png"]);
   });
 
   it("reports new-file line numbers and never the value", () => {

@@ -5,6 +5,8 @@ import { findSecrets, type SecretHit } from "./secrets";
 
 interface CheckResult {
   broken: boolean;
+  /** Overrides the rule severity, e.g. "warn" when a check could not see everything. */
+  brokenStatus?: "warn";
   message: string;
   paths?: string[];
 }
@@ -55,14 +57,21 @@ export function checkNoSecrets(pr: PullRequestData): CheckResult {
       paths: unique(hits.map((hit) => hit.path)),
     };
   }
-  const unscanned = pr.files.filter((file) => file.patch === undefined && file.status !== "removed").length;
-  return {
-    broken: false,
-    message:
-      unscanned === 0
-        ? "No secrets found in added lines."
-        : `No secrets found in added lines; ${plural(unscanned, "file")} had no patch and could not be scanned.`,
-  };
+  // A green check must mean "scanned and clean", so unseen content is a warning.
+  const unscanned = pr.files.filter((file) => file.patch === undefined && file.status !== "removed");
+  if (unscanned.length > 0 || pr.filesTruncated) {
+    const parts = [
+      unscanned.length > 0 ? `${plural(unscanned.length, "file")} had no diff to scan` : null,
+      pr.filesTruncated ? "the PR has more files than were fetched" : null,
+    ].filter((part): part is string => part !== null);
+    return {
+      broken: true,
+      brokenStatus: "warn",
+      message: `No secrets found in scanned lines, but ${parts.join(" and ")}.`,
+      paths: unscanned.map((file) => file.path),
+    };
+  }
+  return { broken: false, message: "No secrets found in added lines." };
 }
 
 export function checkLockfileSync(pr: PullRequestData): CheckResult {
@@ -111,7 +120,7 @@ export function runCodeChecks(pr: PullRequestData): Finding[] {
     const result = check(pr);
     return {
       ruleId: rule.id,
-      status: result.broken ? rule.severity : "pass",
+      status: result.broken ? (result.brokenStatus ?? rule.severity) : "pass",
       message: result.message,
       ...(result.paths ? { paths: result.paths } : {}),
     };
